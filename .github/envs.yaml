@@ -1,0 +1,32 @@
+name: Deploy Migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: The namespace to deploy to
+        required: true
+        type: choice
+        options:
+          - stage1
+          - stage2
+          - stage3
+  workflow_call:
+    inputs:
+      environment:
+        description: The namespace to deploy to
+        type: string
+        required: true
+
+jobs:
+  deploy:
+    name: Deploy Migrations
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Apply all pending migrations to database
+        run: 'echo "$DSN"'
+        env:
+          DSN: ${{ secrets.DSN }}
