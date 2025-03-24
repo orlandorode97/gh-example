@@ -72,13 +72,13 @@ jobs:
           echo "DSN=$(gcloud secrets versions access "latest" --secret '${{ inputs.environment }}-migration-dsn')" >> $GITHUB_ENV
       - name: Setting up MySQL env vars
         run: |
-         IFS=":/@" read -r _ _ MYSQL_USER MYSQL_PWD MYSQL_HOST MYSQL_PORT MYSQL_DB _ <<< "${{ env.DSN }}"
-      
-        echo "MYSQL_USER=$MYSQL_USER" >> $GITHUB_ENV
-        echo "MYSQL_PWD=$MYSQL_PWD" >> $GITHUB_ENV
-        echo "MYSQL_HOST=$MYSQL_HOST" >> $GITHUB_ENV
-        echo "MYSQL_PORT=$MYSQL_PORT" >> $GITHUB_ENV
-        echo "MYSQL_DB=$MYSQL_DB" >> $GITHUB_ENV
+          IFS=":/@" read -r _ _ MYSQL_USER MYSQL_PWD MYSQL_HOST MYSQL_PORT MYSQL_DB _ <<< "${{ env.DSN }}"
+
+          echo "MYSQL_USER=$MYSQL_USER" >> $GITHUB_ENV
+          echo "MYSQL_PWD=$MYSQL_PWD" >> $GITHUB_ENV
+          echo "MYSQL_HOST=$MYSQL_HOST" >> $GITHUB_ENV
+          echo "MYSQL_PORT=$MYSQL_PORT" >> $GITHUB_ENV
+          echo "MYSQL_DB=$MYSQL_DB" >> $GITHUB_ENV
 
       - name: Execute MySQL query
         env:
