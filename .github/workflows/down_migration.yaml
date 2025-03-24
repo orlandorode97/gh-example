@@ -11,10 +11,6 @@ on:
           - stage1
           - stage2
           - stage3
-      migration_name:
-        description: The migration name to execute the rollback e.x `20250324015639_migration_name`
-        required: true
-        type: string
       repository:
         description: The repository containing the Prisma migrations
         required: true
@@ -67,7 +63,7 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
 
-      - name: GCLOUD
+      - name: Get Secret by Secret Manager
         run: |-
           echo "DSN=$(gcloud secrets versions access "latest" --secret '${{ inputs.environment }}-migration-dsn')" >> $GITHUB_ENV
       - name: Setting up MySQL env vars
