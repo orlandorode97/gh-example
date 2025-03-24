@@ -89,13 +89,34 @@ jobs:
           MYSQL_PORT: ${{ env.MYSQL_PORT }}
           MYSQL_DB: ${{ env.MYSQL_DB }}
         run: |
-          FAILED_MIGRATION=$(mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PWD $MYSQL_DB -sN -e "SELECT migration_name FROM \`_prisma_migrations\` WHERE finished_at IS NULL ORDER BY started_at DESC LIMIT 1")
+          FAILED_MIGRATION=$(mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PWD $MYSQL_DB -sN -e "SELECT migration_name FROM \`_prisma_migrations\` WHERE finished_at IS AND rolled_back_at IS NULL ORDER BY started_at DESC LIMIT 1")
           echo "FAILED_MIGRATION=$FAILED_MIGRATION" >> $GITHUB_OUTPUT
 
-      - name: Executing rollback migration
+      - name: Executing failed rollback migration
         if: steps.check-migrations.outputs.FAILED_MIGRATION != ''
         run: |
           echo "Resolving migration: ${{ steps.check-migrations.outputs.FAILED_MIGRATION }}"
           npx prisma migrate resolve --rolled-back "${{ steps.check-migrations.outputs.FAILED_MIGRATION }}"
+        env:
+          DSN: ${{ env.DSN }}
+
+      - name: Check last migration applied
+        id: check-last-migration
+        if: steps.check-migrations.outputs.FAILED_MIGRATION == ''
+        env:
+          MYSQL_USER: ${{ env.MYSQL_USER }}
+          MYSQL_PWD: ${{ env.MYSQL_PWD }}
+          MYSQL_HOST: ${{ env.MYSQL_HOST }}
+          MYSQL_PORT: ${{ env.MYSQL_PORT }}
+          MYSQL_DB: ${{ env.MYSQL_DB }}
+        run: |
+          LAST_MIGRATION=$(mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PWD $MYSQL_DB -sN -e "SELECT migration_name FROM \`_prisma_migrations\` WHERE rolled_back_at IS NULL ORDER BY finished_at DESC LIMIT 1")
+          echo "LAST_MIGRATION=$LAST_MIGRATION" >> $GITHUB_OUTPUT
+
+      - name: Executing rollback migration
+        if: steps.check-last-migration.outputs.LAST_MIGRATION != ''
+        run: |
+          echo "Resolving migration: ${{ steps.check-last-migration.outputs.LAST_MIGRATION }}"
+          npx prisma db execute --file 'prisma/migrations/${{ steps.check-last-migration.outputs.LAST_MIGRATION }}/down.sql' --schema 'prisma/schema.prisma'
         env:
           DSN: ${{ env.DSN }}
