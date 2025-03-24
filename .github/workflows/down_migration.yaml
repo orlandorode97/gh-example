@@ -80,7 +80,8 @@ jobs:
           echo "MYSQL_PORT=$MYSQL_PORT" >> $GITHUB_ENV
           echo "MYSQL_DB=$MYSQL_DB" >> $GITHUB_ENV
 
-      - name: Execute MySQL query
+      - name: Check faild migration
+        id: check-migrations
         env:
           MYSQL_USER: ${{ env.MYSQL_USER }}
           MYSQL_PWD: ${{ env.MYSQL_PWD }}
@@ -92,8 +93,9 @@ jobs:
           echo "FAILED_MIGRATION=$FAILED_MIGRATION" >> $GITHUB_OUTPUT
 
       - name: Executing rollback migration
-        if: steps.deploy.outputs.FAILED_MIGRATION != ''
-        run: |-
-          npx prisma migrate resolve --rolled-back "${{ steps.deploy.outputs.FAILED_MIGRATION }}"
+        if: steps.check-migrations.outputs.FAILED_MIGRATION != ''
+        run: |
+          echo "Resolving migration: ${{ steps.check-migrations.outputs.FAILED_MIGRATION }}"
+          npx prisma migrate resolve --rolled-back "${{ steps.check-migrations.outputs.FAILED_MIGRATION }}"
         env:
           DSN: ${{ env.DSN }}
