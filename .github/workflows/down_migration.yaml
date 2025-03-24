@@ -89,7 +89,7 @@ jobs:
           MYSQL_PORT: ${{ env.MYSQL_PORT }}
           MYSQL_DB: ${{ env.MYSQL_DB }}
         run: |
-          FAILED_MIGRATION=$(mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PWD $MYSQL_DB -sN -e "SELECT migration_name FROM \`_prisma_migrations\` WHERE finished_at IS AND rolled_back_at IS NULL ORDER BY started_at DESC LIMIT 1")
+          FAILED_MIGRATION=$(mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PWD $MYSQL_DB -sN -e "SELECT migration_name FROM \`_prisma_migrations\` WHERE finished_at IS NULL AND rolled_back_at IS NULL ORDER BY started_at DESC LIMIT 1")
           echo "FAILED_MIGRATION=$FAILED_MIGRATION" >> $GITHUB_OUTPUT
 
       - name: Executing failed rollback migration
