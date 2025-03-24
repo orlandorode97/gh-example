@@ -118,5 +118,11 @@ jobs:
         run: |
           echo "Resolving migration: ${{ steps.check-last-migration.outputs.LAST_MIGRATION }}"
           npx prisma db execute --file 'prisma/migrations/${{ steps.check-last-migration.outputs.LAST_MIGRATION }}/down.sql' --schema 'prisma/schema.prisma'
+          mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PWD $MYSQL_DB -sN -e "DELETE FROM \`_prisma_migrations\` WHERE migration_name = '${{steps.check-last-migration.outputs.LAST_MIGRATION}}'"
         env:
           DSN: ${{ env.DSN }}
+          MYSQL_USER: ${{ env.MYSQL_USER }}
+          MYSQL_PWD: ${{ env.MYSQL_PWD }}
+          MYSQL_HOST: ${{ env.MYSQL_HOST }}
+          MYSQL_PORT: ${{ env.MYSQL_PORT }}
+          MYSQL_DB: ${{ env.MYSQL_DB }}
