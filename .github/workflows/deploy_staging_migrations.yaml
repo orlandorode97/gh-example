@@ -39,8 +39,8 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
       - name: GCLOUD
         run: |-
-          gcloud secrets versions access "latest" --secret "${{ inputs.environment }}-gh-example-secret"
-      # - name: Apply all pending migrations to database
-      #   run: npx prisma migrate deploy
-      #   env:
-      #     DSN: ${{ secrets.DSN }}
+          echo "DSN=$(gcloud secrets versions access "latest" --secret '${{ inputs.environment }}-gh-example-secret')" >> $GITHUB_ENV
+      - name: Apply all pending migrations to database
+        run: npx prisma migrate deploy
+        env:
+          DSN: ${{ env.DSN }}
