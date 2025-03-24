@@ -29,6 +29,9 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+        with:
+          repository: orlandorode97/prisma-gh
+          ref: main
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -40,6 +43,9 @@ jobs:
       - name: GCLOUD
         run: |-
           echo "DSN=$(gcloud secrets versions access "latest" --secret '${{ inputs.environment }}-gh-example-secret')" >> $GITHUB_ENV
+      - name: List content
+        run: ls -la
+
       - name: Apply all pending migrations to database
         run: npx prisma migrate deploy
         env:
