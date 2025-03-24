@@ -1,0 +1,76 @@
+name: Rollback Migrations in Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: The namespace where migrations will be rolled back
+        required: true
+        type: choice
+        options:
+          - stage1
+          - stage2
+          - stage3
+      migration_name:
+        description: The migration name to execute the rollback e.x `20250324015639_migration_name`
+        required: true
+        type: string
+      repository:
+        description: The repository containing the Prisma migrations
+        required: true
+        type: string
+      branch:
+        description: The repository branch
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      environment:
+        description: The namespace where migrations will be rolled back
+        type: string
+        required: true
+      repository:
+        description: The repository containing the Prisma migrations
+        type: string
+        required: true
+      branch:
+        description: The repository branch
+        type: string
+        required: true
+
+jobs:
+  deploy:
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    name: Rollback Migrations
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout repo "orlandorode97/${{ inputs.repository }}"
+        uses: actions/checkout@v3
+        with:
+          repository: "orlandorode97/${{ inputs.repository }}"
+          ref: ${{ inputs.branch }}
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/909613696623/locations/global/workloadIdentityPools/engineering/providers/github"
+          service_account: "gcloud-gh-actions@omg-example.iam.gserviceaccount.com"
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+      - name: GCLOUD
+        run: |-
+          echo "DSN=$(gcloud secrets versions access "latest" --secret '${{ inputs.environment }}-migration-dsn')" >> $GITHUB_ENV
+
+      - name: Executing rollback migration
+        run: |-
+          npx prisma db execute \ 
+          --file 'prisma/migrations/${{inputs.migration_name}}/down.sql' \
+          --schema 'prisma/schema.prisma'
+        env:
+          DSN: ${{ env.DSN }}
