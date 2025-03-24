@@ -88,11 +88,11 @@ jobs:
           MYSQL_PORT: ${{ env.MYSQL_PORT }}
           MYSQL_DB: ${{ env.MYSQL_DB }}
         run: |
-        mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PWD $MYSQL_DB -e "SHOW TABLES;"
+          mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PWD $MYSQL_DB -e "SHOW TABLES;"
 
       # - name: Executing rollback migration
       #   run: |-
-      #     npx prisma db execute \ 
+      #     npx prisma db execute \
       #     --file 'prisma/migrations/${{inputs.migration_name}}/down.sql' \
       #     --schema 'prisma/schema.prisma'
       #   env:
