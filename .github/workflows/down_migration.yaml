@@ -54,6 +54,9 @@ jobs:
           repository: "orlandorode97/${{ inputs.repository }}"
           ref: ${{ inputs.branch }}
 
+      - name: Install MySQL Client
+        run: sudo apt-get install -y mysql-client
+
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@v2
@@ -63,14 +66,34 @@ jobs:
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
+
       - name: GCLOUD
         run: |-
           echo "DSN=$(gcloud secrets versions access "latest" --secret '${{ inputs.environment }}-migration-dsn')" >> $GITHUB_ENV
+      - name: Setting up MySQL env vars
+        run: |
+          IFS=":/@" read -r _ _ user password host port db _ <<< "${{env.DSN}}"
 
-      - name: Executing rollback migration
-        run: |-
-          npx prisma db execute \ 
-          --file 'prisma/migrations/${{inputs.migration_name}}/down.sql' \
-          --schema 'prisma/schema.prisma'
+          echo "MYSQL_USER=$user" >> $GITHUB_ENV
+          echo "MYSQL_PWD=$password" >> $GITHUB_ENV
+          echo "MYSQL_HOST=$host" >> $GITHUB_ENV
+          echo "MYSQL_PORT=$port" >> $GITHUB_ENV
+          echo "MYSQL_DB=$db" >> $GITHUB_ENV
+
+      - name: Execute MySQL query
         env:
-          DSN: ${{ env.DSN }}
+          MYSQL_USER: ${{ env.MYSQL_USER }}
+          MYSQL_PWD: ${{ env.MYSQL_PWD }}
+          MYSQL_HOST: ${{ env.MYSQL_HOST }}
+          MYSQL_PORT: ${{ env.MYSQL_PORT }}
+          MYSQL_DB: ${{ env.MYSQL_DB }}
+        run: |
+        mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PWD $MYSQL_DB -e "SHOW TABLES;"
+
+      # - name: Executing rollback migration
+      #   run: |-
+      #     npx prisma db execute \ 
+      #     --file 'prisma/migrations/${{inputs.migration_name}}/down.sql' \
+      #     --schema 'prisma/schema.prisma'
+      #   env:
+      #     DSN: ${{ env.DSN }}
