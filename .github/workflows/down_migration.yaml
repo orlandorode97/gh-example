@@ -88,12 +88,12 @@ jobs:
           MYSQL_PORT: ${{ env.MYSQL_PORT }}
           MYSQL_DB: ${{ env.MYSQL_DB }}
         run: |
-          mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PWD $MYSQL_DB -e "SHOW TABLES;"
+          FAILED_MIGRATION=$(mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PWD $MYSQL_DB -sN -e "SELECT migration_name FROM `_prisma_migrations` WHERE finished_at IS NULL ORDER BY started_at DESC LIMIT 1")
+          echo "FAILED_MIGRATION=$FAILED_MIGRATION" >> $GITHUB_OUTPUT
 
-      # - name: Executing rollback migration
-      #   run: |-
-      #     npx prisma db execute \
-      #     --file 'prisma/migrations/${{inputs.migration_name}}/down.sql' \
-      #     --schema 'prisma/schema.prisma'
-      #   env:
-      #     DSN: ${{ env.DSN }}
+      - name: Executing rollback migration
+        if: steps.deploy.outputs.FAILED_MIGRATION != ''
+        run: |-
+          npx prisma migrate resolve --rolled-back "${{ steps.deploy.outputs.FAILED_MIGRATION }}"
+        env:
+          DSN: ${{ env.DSN }}
