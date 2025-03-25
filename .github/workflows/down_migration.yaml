@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "The namespace where migrations will be rolled back"
+        description: The namespace where migrations will be rolled back
         required: true
         type: choice
         options:
@@ -12,45 +12,49 @@ on:
           - stage2
           - stage3
       repository:
-        description: "The repository containing the Prisma migrations"
+        description: The repository containing the Prisma migrations
         required: true
         type: string
       branch:
-        description: "The repository branch"
+        description: The repository branch
         required: true
         type: string
   workflow_call:
     inputs:
       environment:
-        description: "The namespace where migrations will be rolled back"
+        description: The namespace where migrations will be rolled back
         type: string
         required: true
       repository:
-        description: "The repository containing the Prisma migrations"
+        description: The repository containing the Prisma migrations
         type: string
         required: true
       branch:
-        description: "The repository branch"
+        description: The repository branch
         type: string
         required: true
-permissions:
-  id-token: write
-  contents: read
 
 jobs:
-  setup:
+  deploy:
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    name: Rollback Migrations
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     steps:
-      - name: Checkout repository
+      - name: Checkout repo "orlandorode97/${{ inputs.repository }}"
         uses: actions/checkout@v3
         with:
           repository: "orlandorode97/${{ inputs.repository }}"
           ref: ${{ inputs.branch }}
 
-      - name: Install Dependencies
+      - name: Install MySQL Client
         run: sudo apt-get install -y mysql-client
 
       - name: Authenticate to Google Cloud
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: "projects/909613696623/locations/global/workloadIdentityPools/engineering/providers/github"
@@ -59,54 +63,62 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
 
-      - name: Retrieve Database Secrets
+      - name: Get Secret by Secret Manager
         run: |-
-          echo "DSN=$(gcloud secrets versions access latest --secret '${{ inputs.environment }}-migration-dsn')" >> $GITHUB_ENV
-
-      - name: Extract MySQL Credentials
+          echo "DSN=$(gcloud secrets versions access "latest" --secret '${{ inputs.environment }}-migration-dsn')" >> $GITHUB_ENV
+      - name: Setting up MySQL env vars
         run: |
-          IFS=':/@' read -r _ _ _ MYSQL_USER MYSQL_PWD MYSQL_HOST MYSQL_PORT MYSQL_DB _ <<< "${{ env.DSN }}"
+          IFS=":/@" read -r _ _ _ MYSQL_USER MYSQL_PWD MYSQL_HOST MYSQL_PORT MYSQL_DB _ <<< "${{ env.DSN }}"
+
           echo "MYSQL_USER=$MYSQL_USER" >> $GITHUB_ENV
           echo "MYSQL_PWD=$MYSQL_PWD" >> $GITHUB_ENV
           echo "MYSQL_HOST=$MYSQL_HOST" >> $GITHUB_ENV
           echo "MYSQL_PORT=$MYSQL_PORT" >> $GITHUB_ENV
           echo "MYSQL_DB=$MYSQL_DB" >> $GITHUB_ENV
 
-  rollback:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - name: Debug Environment Variables
-        run: |
-          echo "MYSQL_HOST=${{ env.MYSQL_HOST }}"
-          echo "MYSQL_PORT=${{ env.MYSQL_PORT }}"
-          echo "MYSQL_USER=${{ env.MYSQL_USER }}"
-          echo "MYSQL_DB=${{ env.MYSQL_DB }}"
-
-      - name: Check for Failed Migrations
+      - name: Check faild migration
         id: check-migrations
+        env:
+          MYSQL_USER: ${{ env.MYSQL_USER }}
+          MYSQL_PWD: ${{ env.MYSQL_PWD }}
+          MYSQL_HOST: ${{ env.MYSQL_HOST }}
+          MYSQL_PORT: ${{ env.MYSQL_PORT }}
+          MYSQL_DB: ${{ env.MYSQL_DB }}
         run: |
-          FAILED_MIGRATION=$(mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PWD $MYSQL_DB -sN -e \
-            "SELECT migration_name FROM \`_prisma_migrations\` WHERE finished_at IS NULL AND rolled_back_at IS NULL ORDER BY started_at DESC LIMIT 1")
-          echo "FAILED_MIGRATION=$FAILED_MIGRATION" >> $GITHUB_ENV
-          echo "::set-output name=FAILED_MIGRATION::$FAILED_MIGRATION"
+          FAILED_MIGRATION=$(mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PWD $MYSQL_DB -sN -e "SELECT migration_name FROM \`_prisma_migrations\` WHERE finished_at IS NULL AND rolled_back_at IS NULL ORDER BY started_at DESC LIMIT 1")
+          echo "FAILED_MIGRATION=$FAILED_MIGRATION" >> $GITHUB_OUTPUT
 
-      - name: Resolve Failed Migration
+      - name: Executing failed rollback migration
         if: steps.check-migrations.outputs.FAILED_MIGRATION != ''
-        run: npx prisma migrate resolve --rolled-back "$FAILED_MIGRATION"
+        run: |
+          echo "Resolving migration: ${{ steps.check-migrations.outputs.FAILED_MIGRATION }}"
+          npx prisma migrate resolve --rolled-back "${{ steps.check-migrations.outputs.FAILED_MIGRATION }}"
+        env:
+          DSN: ${{ env.DSN }}
 
-      - name: Check Last Applied Migration
+      - name: Check last migration applied
         id: check-last-migration
         if: steps.check-migrations.outputs.FAILED_MIGRATION == ''
+        env:
+          MYSQL_USER: ${{ env.MYSQL_USER }}
+          MYSQL_PWD: ${{ env.MYSQL_PWD }}
+          MYSQL_HOST: ${{ env.MYSQL_HOST }}
+          MYSQL_PORT: ${{ env.MYSQL_PORT }}
+          MYSQL_DB: ${{ env.MYSQL_DB }}
         run: |
-          LAST_MIGRATION=$(mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PWD $MYSQL_DB -sN -e \
-            "SELECT migration_name FROM \`_prisma_migrations\` WHERE rolled_back_at IS NULL ORDER BY finished_at DESC LIMIT 1")
-          echo "LAST_MIGRATION=$LAST_MIGRATION" >> $GITHUB_ENV
-          echo "::set-output name=LAST_MIGRATION::$LAST_MIGRATION"
+          LAST_MIGRATION=$(mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PWD $MYSQL_DB -sN -e "SELECT migration_name FROM \`_prisma_migrations\` WHERE rolled_back_at IS NULL ORDER BY finished_at DESC LIMIT 1")
+          echo "LAST_MIGRATION=$LAST_MIGRATION" >> $GITHUB_OUTPUT
 
-      - name: Execute Rollback
+      - name: Executing rollback migration
         if: steps.check-last-migration.outputs.LAST_MIGRATION != ''
         run: |
-          npx prisma db execute --file "prisma/migrations/$LAST_MIGRATION/down.sql" --schema "prisma/schema.prisma"
-          mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PWD $MYSQL_DB -sN -e \
-            "DELETE FROM \`_prisma_migrations\` WHERE migration_name = '$LAST_MIGRATION' AND rolled_back_at IS NULL"
+          echo "Resolving migration: ${{ steps.check-last-migration.outputs.LAST_MIGRATION }}"
+          npx prisma db execute --file 'prisma/migrations/${{ steps.check-last-migration.outputs.LAST_MIGRATION }}/down.sql' --schema 'prisma/schema.prisma'
+          mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PWD $MYSQL_DB -sN -e "DELETE FROM \`_prisma_migrations\` WHERE migration_name = '${{steps.check-last-migration.outputs.LAST_MIGRATION}}' AND rolled_back_at IS NULL"
+        env:
+          DSN: ${{ env.DSN }}
+          MYSQL_USER: ${{ env.MYSQL_USER }}
+          MYSQL_PWD: ${{ env.MYSQL_PWD }}
+          MYSQL_HOST: ${{ env.MYSQL_HOST }}
+          MYSQL_PORT: ${{ env.MYSQL_PORT }}
+          MYSQL_DB: ${{ env.MYSQL_DB }}
