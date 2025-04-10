@@ -52,9 +52,9 @@ jobs:
 
           metadata="$directory/metadata-$environment.json"
 
-          secret_name=$(jq -r '.secret_name' "$json_file")
-          env_var_name=$(jq -r '.env_var_name' "$json_file")
-          github_url=$(jq -r '.github_url' "$json_file")
+          secret_name=$(jq -r '.secret_name' "$metadata")
+          env_var_name=$(jq -r '.env_var_name' "$metadata")
+          github_url=$(jq -r '.github_url' "$metadata")
 
           # Output to GitHub Actions' environment
           echo "secret_name=$secret_name" >> $GITHUB_ENV
