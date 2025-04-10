@@ -83,12 +83,13 @@ jobs:
           else
             echo "File not found!"
           fi
+
       - name: Use extracted fields
         run: |
-          # Access the extracted fields from the previous step using outputs
-         echo "Secret Name: ${{ steps.extract_fields.outputs.secret_name }}"
-         echo "Environment Variable Name: ${{ steps.extract_fields.outputs.env_var_name }}"
-         echo "GitHub URL: ${{ steps.extract_fields.outputs.github_url }}"
+          # Access the extracted fields from the previous step using environment variables
+          echo "Secret Name: $SECRET_NAME"
+          echo "Environment Variable Name: $ENV_VAR_NAME"
+          echo "GitHub URL: $GITHUB_URL"
 
       # Uncomment the following steps if necessary
 
@@ -108,4 +109,9 @@ jobs:
       #   uses: google-github-actions/setup-gcloud@v1
       # - name: GCLOUD
       #   run: |-
-      #     echo "DSN=$(gcloud secrets
+      #     echo "DSN=$(gcloud secrets versions access "latest" --secret '${{ inputs.environment }}-migration-dsn')" >> $GITHUB_ENV
+      #
+      # - name: Apply all pending migrations to database
+      #   run: npx prisma migrate deploy
+      #   env:
+      #     DSN: ${{ env.DSN }}
