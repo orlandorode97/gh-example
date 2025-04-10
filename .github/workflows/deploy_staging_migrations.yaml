@@ -50,7 +50,7 @@ jobs:
           directory=${{inputs.directory}}
           environment=${{inputs.environment}}
 
-          metadata="$directory/metadata-$environment.json"
+          metadata="./$directory/metadata-$environment.json"
 
           secret_name=$(jq -r '.secret_name' "$metadata")
           env_var_name=$(jq -r '.env_var_name' "$metadata")
