@@ -50,7 +50,7 @@ jobs:
           directory=${{inputs.directory}}
           environment=${{inputs.environment}}
 
-          metadata="./$directory/metadata-$environment.json"
+          metadata="$directory/metadata-$environment.json"
 
           secret_name=$(jq -r '.secret_name' "$metadata")
           env_var_name=$(jq -r '.env_var_name' "$metadata")
@@ -60,6 +60,22 @@ jobs:
           echo "secret_name=$secret_name" >> $GITHUB_ENV
           echo "env_var_name=$env_var_name" >> $GITHUB_ENV
           echo "github_url=$github_url" >> $GITHUB_ENV
+
+          if [[ ! -f "$metadata" ]]; then
+            echo "Error: File '$metadata' does not exist."
+            exit 1
+          fi
+
+          # Extract values using jq
+          secret_name=$(jq -r '.secret_name' "$metadata")
+          env_var_name=$(jq -r '.env_var_name' "$metadata")
+          github_url=$(jq -r '.github_url' "$metadata")
+
+          # Output to GitHub Actions' environment
+          echo "secret_name=$secret_name" >> $GITHUB_ENV
+          echo "env_var_name=$env_var_name" >> $GITHUB_ENV
+          echo "github_url=$github_url" >> $GITHUB_ENV
+
       - name: Use extracted metadata
         run: |
           echo "Secret Name: ${{ steps.read_json.outputs.secret_name }}"
