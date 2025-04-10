@@ -1,0 +1,5 @@
+{
+  "secret_name": "projects/<project-id>/secrets/project_dsn",
+  "env_var_name": "OMG_API_DSN",
+  "github_url": "http://github.com/org/repoName"
+}

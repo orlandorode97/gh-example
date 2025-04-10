@@ -44,6 +44,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     steps:
+      - name: Get Metadata
+        id: get_metadata
+        run: |
       - name: Checkout repo "orlandorode97/${{ inputs.repository }}"
         uses: actions/checkout@v3
         with:

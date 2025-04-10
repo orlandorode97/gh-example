@@ -11,7 +11,7 @@ on:
           - stage1
           - stage2
           - stage3
-      repository:
+      directory:
         description: The repository containing the Prisma migrations
         required: true
         type: string
@@ -25,8 +25,8 @@ on:
         description: The namespace where migrations will be deployed
         type: string
         required: true
-      repository:
-        description: The repository containing the Prisma migrations
+      directory:
+        description: Define directory description here
         type: string
         required: true
       branch:
@@ -44,25 +44,46 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     steps:
-      - name: Checkout repo "orlandorode97/${{ inputs.repository }}"
-        uses: actions/checkout@v3
-        with:
-          repository: "orlandorode97/${{ inputs.repository }}"
-          ref: ${{ inputs.branch }}
+      - name: Get Metadata
+        id: get_metadata
+        run: |
+          directory=${{inputs.directory}}
+          environment=${{inputs.environment}}
 
-      - name: Authenticate to Google Cloud
-        id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: "projects/909613696623/locations/global/workloadIdentityPools/engineering/providers/github"
-          service_account: "gcloud-gh-actions@omg-example.iam.gserviceaccount.com"
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
-      - name: GCLOUD
-        run: |-
-          echo "DSN=$(gcloud secrets versions access "latest" --secret '${{ inputs.environment }}-migration-dsn')" >> $GITHUB_ENV
+          metadata="$directory/metadata-$environment.json"
 
-      - name: Apply all pending migrations to database
-        run: npx prisma migrate deploy
-        env:
-          DSN: ${{ env.DSN }}
+          secret_name=$(jq -r '.secret_name' "$json_file")
+          env_var_name=$(jq -r '.env_var_name' "$json_file")
+          github_url=$(jq -r '.github_url' "$json_file")
+
+          # Output to GitHub Actions' environment
+          echo "secret_name=$secret_name" >> $GITHUB_ENV
+          echo "env_var_name=$env_var_name" >> $GITHUB_ENV
+          echo "github_url=$github_url" >> $GITHUB_ENV
+      - name: Use extracted metadata
+        run: |
+          echo "Secret Name: ${{ steps.read_json.outputs.secret_name }}"
+          echo "Environment Variable Name: ${{ steps.read_json.outputs.env_var_name }}"
+          echo "GitHub URL: ${{ steps.read_json.outputs.github_url }}"
+      # - name: Checkout repo "orlandorode97/${{ inputs.repository }}"
+      #   uses: actions/checkout@v3
+      #   with:
+      #     repository: "orlandorode97/${{ inputs.repository }}"
+      #     ref: ${{ inputs.branch }}
+      #
+      # - name: Authenticate to Google Cloud
+      #   id: auth
+      #   uses: google-github-actions/auth@v2
+      #   with:
+      #     workload_identity_provider: "projects/909613696623/locations/global/workloadIdentityPools/engineering/providers/github"
+      #     service_account: "gcloud-gh-actions@omg-example.iam.gserviceaccount.com"
+      # - name: Set up Cloud SDK
+      #   uses: google-github-actions/setup-gcloud@v1
+      # - name: GCLOUD
+      #   run: |-
+      #     echo "DSN=$(gcloud secrets versions access "latest" --secret '${{ inputs.environment }}-migration-dsn')" >> $GITHUB_ENV
+      #
+      # - name: Apply all pending migrations to database
+      #   run: npx prisma migrate deploy
+      #   env:
+      #     DSN: ${{ env.DSN }}
