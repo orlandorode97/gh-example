@@ -38,20 +38,22 @@ jobs:
   deploy:
     permissions:
       contents: "read"
-      id-token: "write"
+      id-token: "write" # Review this permission if needed
 
     name: Deploy Migrations
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
       - name: Verify file existence
         run: |
-        echo "Listing files in the repository:"
-        ls -R # List all files recursively
-        echo "Listing files in prisma-gh directory:"
-        ls prisma-gh/
+          echo "Listing files in the repository:"
+          ls -R # List all files recursively
+          echo "Listing files in prisma-gh directory:"
+          ls prisma-gh/
 
       - name: Install jq
         run: sudo apt-get install jq
@@ -68,24 +70,22 @@ jobs:
           if [ -f "$FILE_PATH" ]; then
             echo "Reading JSON file: $FILE_PATH"
             
-            # Extract specific fields from the JSON file and set them as outputs
+            # Extract specific fields from the JSON file and set them as environment variables
             SECRET_NAME=$(jq -r '.secret_name' "$FILE_PATH")
             ENV_VAR_NAME=$(jq -r '.env_var_name' "$FILE_PATH")
             GITHUB_URL=$(jq -r '.github_url' "$FILE_PATH")
 
-            # Set these values as outputs for use in later steps
-            echo "::set-output name=secret_name::$SECRET_NAME"
-            echo "::set-output name=env_var_name::$ENV_VAR_NAME"
-            echo "::set-output name=github_url::$GITHUB_URL"
+            # Set these values as environment variables for use in later steps
+            echo "secret_name=$SECRET_NAME" >> $GITHUB_ENV
+            echo "env_var_name=$ENV_VAR_NAME" >> $GITHUB_ENV
+            echo "github_url=$GITHUB_URL" >> $GITHUB_ENV
             
           else
             echo "File not found!"
           fi
-      - name: Use extracted metadata
-        run: |
-          echo "Secret Name: ${{ steps.read_json.outputs.secret_name }}"
-          echo "Environment Variable Name: ${{ steps.read_json.outputs.env_var_name }}"
-          echo "GitHub URL: ${{ steps.read_json.outputs.github_url }}"
+
+      # Uncomment the following steps if necessary
+
       # - name: Checkout repo "orlandorode97/${{ inputs.repository }}"
       #   uses: actions/checkout@v3
       #   with:
@@ -102,9 +102,4 @@ jobs:
       #   uses: google-github-actions/setup-gcloud@v1
       # - name: GCLOUD
       #   run: |-
-      #     echo "DSN=$(gcloud secrets versions access "latest" --secret '${{ inputs.environment }}-migration-dsn')" >> $GITHUB_ENV
-      #
-      # - name: Apply all pending migrations to database
-      #   run: npx prisma migrate deploy
-      #   env:
-      #     DSN: ${{ env.DSN }}
+      #     echo "DSN=$(gcloud secrets
