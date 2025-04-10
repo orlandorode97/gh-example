@@ -83,7 +83,6 @@ jobs:
           else
             echo "File not found!"
           fi
-
       - name: Use extracted fields
         run: |
           # Access the extracted fields from the previous step using outputs
