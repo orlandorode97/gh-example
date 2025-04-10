@@ -46,6 +46,7 @@ jobs:
     steps:
       - name: Get Metadata
         id: get_metadata
+      - uses: actions/checkout@v2
         with:
           path: "./"
         run: |
