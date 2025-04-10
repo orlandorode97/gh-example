@@ -49,8 +49,6 @@ jobs:
 
       - name: Get Metadata
         id: get_metadata
-        with:
-          path: "./"
         run: |
           directory=${{inputs.directory}}
           environment=${{inputs.environment}}
