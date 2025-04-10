@@ -84,6 +84,13 @@ jobs:
             echo "File not found!"
           fi
 
+      - name: Use extracted fields
+        run: |
+          # Access the extracted fields from the previous step using outputs
+         echo "Secret Name: ${{ steps.extract_fields.outputs.secret_name }}"
+         echo "Environment Variable Name: ${{ steps.extract_fields.outputs.env_var_name }}"
+         echo "GitHub URL: ${{ steps.extract_fields.outputs.github_url }}"
+
       # Uncomment the following steps if necessary
 
       # - name: Checkout repo "orlandorode97/${{ inputs.repository }}"
