@@ -44,6 +44,15 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Verify file existence
+        run: |
+        echo "Listing files in the repository:"
+        ls -R # List all files recursively
+        echo "Listing files in prisma-gh directory:"
+        ls prisma-gh/
+
       - name: Install jq
         run: sudo apt-get install jq
 
