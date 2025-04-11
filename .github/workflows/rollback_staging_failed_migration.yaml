@@ -63,7 +63,7 @@ jobs:
       - name: Print
         run: |
           ls -a
-          pwd
+          echo $HOME
 
       - name: Upload .my.cnf as artifact
         uses: actions/upload-artifact@v4
