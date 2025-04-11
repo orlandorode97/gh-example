@@ -47,6 +47,9 @@ jobs:
         run: |
           echo "DSN=$(gcloud secrets versions access latest --secret='${{ needs.get_metadata.outputs.secret_name }}')" >> $GITHUB_ENV
 
+      - name: Debug DSN
+        run: echo "DSN=$DSN"
+
       - name: Extract MySQL Credentials and creating ~/.my.cnf
         run: |
           IFS=':/@' read -r _ _ _ MYSQL_USER MYSQL_PWD MYSQL_HOST MYSQL_PORT MYSQL_DB _ <<< "${{ env.DSN }}"
@@ -60,6 +63,10 @@ jobs:
           EOF
           chmod 600 $HOME/.my.cnf
 
+      - name: Verify the file exists before uploading
+        run: |
+          if [ -f $HOME/.my.cnf ]; then echo ".my.cnf exists"; else echo ".my.cnf does not exist"; fi
+
       - name: List files after creating .my.cnf
         run: ls -la $HOME/
 
@@ -67,7 +74,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mysql_conf
-          path: $HOME/.my.cnf
+          path: $HOME/.my.cnf # or try `~/ .my.cnf`
 
   execute:
     name: Executing Rollback of failed migration
