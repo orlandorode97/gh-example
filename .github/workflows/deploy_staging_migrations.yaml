@@ -69,6 +69,7 @@ jobs:
             echo "File not found!"
           fi
   deploy:
+    name: Deploy
     needs: get_metadata
     runs-on: ubuntu-latest
     permissions:
@@ -108,5 +109,5 @@ jobs:
       - name: Apply all pending migrations to database
         run: |
           echo "${{ needs.get_metadata.outputs.env_var_name }}=$DSN"
-          prisma migrate deploy
-          ls -a
+          npx prisma migrate deploy
+          npx prisma --version
