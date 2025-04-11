@@ -97,8 +97,14 @@ jobs:
         run: |
           echo "DSN=$(gcloud secrets versions access latest --secret='${{ needs.get_metadata.outputs.secret_name }}')" >> $GITHUB_ENV
 
+      - name: Install prisma
+        uses: actions-setup-node@v4
+        with:
+          node-version: "18.8"
+        run: npm install prisma
+
       - name: Apply all pending migrations to database
         run: |
           echo "${{ needs.get_metadata.outputs.env_var_name }}=$DSN"
-          npx prisma migrate deploy
+          prisma migrate deploy
           ls -a
