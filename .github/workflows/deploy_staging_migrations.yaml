@@ -71,17 +71,13 @@ jobs:
           echo "File path: $FILE_PATH"
 
           # Check if the file exists
-          if [ -f "$FILE_PATH" ]; then
-            echo "Reading JSON file: $FILE_PATH"
-            
-            $Metadata = Get-Content -Path $jsonFile | ConvertFrom-Json
+          echo "Reading JSON file: $FILE_PATH"
 
-            # Output the data to GitHub Actions output
-            "secret_name={0}" -f $Metadata.secret_name | Add-Content -Path $Env:GITHUB_OUTPUT
-            "env_var_name={0}" -f $Metadata.env_var_name | Add-Content -Path $Env:GITHUB_OUTPUT
-          else
-            echo "File not found!"
-          fi
+          $Metadata = Get-Content -Path $jsonFile | ConvertFrom-Json
+
+          # Output the data to GitHub Actions output
+          "secret_name={0}" -f $Metadata.secret_name | Add-Content -Path $Env:GITHUB_OUTPUT
+          "env_var_name={0}" -f $Metadata.env_var_name | Add-Content -Path $Env:GITHUB_OUTPUT
 
       - name: Use extracted metadata
         run: |
