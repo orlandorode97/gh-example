@@ -98,7 +98,7 @@ jobs:
           echo "DSN=$(gcloud secrets versions access latest --secret='${{ needs.get_metadata.outputs.secret_name }}')" >> $GITHUB_ENV
 
       - name: Use Node.js
-        uses: actions-setup-node@v4
+        uses: actions/setup-node@v4
         with:
           node-version: "18.8"
 
