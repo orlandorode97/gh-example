@@ -110,4 +110,3 @@ jobs:
         run: |
           echo "${{ needs.get_metadata.outputs.env_var_name }}=$DSN"
           npx prisma migrate deploy
-          npx prisma --version
