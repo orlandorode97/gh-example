@@ -77,6 +77,7 @@ jobs:
             echo "File not found!"
           fi
   deploy:
+    needs: get_metadata
     runs-on: ubuntu-latest
     permissions:
       contents: "read"
@@ -102,9 +103,9 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
       - name: Get Secret by Secret Manager
         run: |-
-          echo "DSN=$(gcloud secrets versions access "latest" --secret '${{ steps.get_metadata.outputs.secret_name }}')" >> $GITHUB_ENV
+          echo "DSN=$(gcloud secrets versions access "latest" --secret '${{ needs.get_metadata.outputs.secret_name }}')" >> $GITHUB_ENV
 
       - name: Apply all pending migrations to database
         run: |
-          echo ${{ steps.get_metadata.outputs.env_var_name }}="${{env.DSN}}"
+          echo ${{ needs.get_metadata.outputs.env_var_name }}="${{env.DSN}}"
           npx prisma migrate deploy
