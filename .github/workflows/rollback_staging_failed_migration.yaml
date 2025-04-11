@@ -91,4 +91,4 @@ jobs:
 
       - name: Use MySQL with .my.cnf
         run: |
-          mysql --defaults-file=./my.cnf -e "SHOW DATABASES;"
+          mysql --defaults-file=./mysql-conf-artifact/.my.cnf -e "SHOW DATABASES;"
