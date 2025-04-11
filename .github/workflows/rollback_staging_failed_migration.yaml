@@ -88,13 +88,6 @@ jobs:
         run: |
           IFS=':/@' read -r _ _ _ MYSQL_USER MYSQL_PWD MYSQL_HOST MYSQL_PORT MYSQL_DB _ <<< "${{ env.DSN }}"
 
-          echo "Parsed values:"
-          echo "User: $MYSQL_USER"
-          echo "Password: $MYSQL_PWD"
-          echo "Host: $MYSQL_HOST"
-          echo "Port: $MYSQL_PORT"
-          echo "Database: $MYSQL_DB"
-
           cat > .my.cnf << EOF
           [client]
           user=${MYSQL_USER}
@@ -103,12 +96,23 @@ jobs:
           port=${MYSQL_PORT}
           database=${MYSQL_DB}
           EOF
-
           chmod 600 .my.cnf
 
-      - name: Cat .my.cnf
-        run: cat .my.cnf
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.11"
 
-      - name: Use MySQL with .my.cnf
+      - name: Installing prisma
+        run: npm install prisma
+
+      - name: Check for Failed Migrations
+        id: check-migrations
         run: |
-          mysql --defaults-file=.my.cnf -e "SHOW DATABASES;"
+          FAILED_MIGRATION=$(mysql --defaults-file=.my.cnf -sN -e \
+            "SELECT migration_name FROM \`_prisma_migrations\` WHERE finished_at IS NULL AND rolled_back_at IS NULL ORDER BY started_at DESC LIMIT 1")
+          echo "failed_migraiton=$FAILED_MIGRATION" >> $GITHUB_OUTPUT
+
+      - name: Resolve Failed Migration
+        if: steps.check-migrations.outputs.failed_migraiton != ''
+        run: npx prisma migrate resolve --rolled-back ${{ steps.check-migrations.outputs.failed_migraiton }}
