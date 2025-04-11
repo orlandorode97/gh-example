@@ -82,11 +82,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: mysql-conf-artifact
-          path: ./
+          path: .
 
       - name: Display structure of downloaded files
-        run: ls -a ./
+        run: ls -la .
 
       - name: Use MySQL with .my.cnf
         run: |
-          mysql --defaults-file=./.my.cnf -e "SHOW DATABASES;"
+          mysql --defaults-file=.my.cnf -e "SHOW DATABASES;"
