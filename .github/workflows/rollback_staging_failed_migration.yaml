@@ -53,6 +53,13 @@ jobs:
       - name: Extract MySQL Credentials and creating .my.cnf
         run: |
           IFS=':/@' read -r _ _ _ MYSQL_USER MYSQL_PWD MYSQL_HOST MYSQL_PORT MYSQL_DB _ <<< "${{ env.DSN }}"
+
+          echo "Parsed values:"
+          echo "User: $MYSQL_USER"
+          echo "Password: $MYSQL_PWD"
+          echo "Host: $MYSQL_HOST"
+          echo "Port: $MYSQL_PORT"
+          echo "Database: $MYSQL_DB"
           touch .my.cnf
           cat > .my.cnf << EOF
           [client]
