@@ -4,8 +4,6 @@ on:
   push:
     paths:
       - "**/"
-    branches:
-      - main
 
 jobs:
   generate-json-files:
