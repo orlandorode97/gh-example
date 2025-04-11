@@ -68,7 +68,7 @@ jobs:
       - name: Upload .my.cnf as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mysql_conf
+          name: mysql-conf-artifact
           path: .my.cnf
 
   execute:
@@ -82,7 +82,7 @@ jobs:
       - name: Download .my.cnf artifact
         uses: actions/download-artifact@v4
         with:
-          name: mysql_conf
+          name: mysql-conf-artifact
       - name: Display structure of downloaded files
         run: ls -R
 
