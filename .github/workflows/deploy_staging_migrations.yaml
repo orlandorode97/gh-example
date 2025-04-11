@@ -35,21 +35,24 @@ on:
         required: true
 
 jobs:
-  deploy:
-    permissions:
-      contents: "read"
-      id-token: "write" # Review this permission if needed
-
-    name: Deploy Migrations
+  install_jq:
+    name: Install jq
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
-
     steps:
       - name: Install jq
         run: sudo apt-get install jq
 
+  get_metadata:
+    name: Get Metadata
+    runs-on: ubuntu-latest
+    outputs:
+      secret_name: ${{ steps.get_metadata.outputs.secret_name }}
+      env_var_name: ${{ steps.get_metadata.outputs.env_var_name}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Get Metadata
-        id: get_metadata
         run: |
           directory=${{inputs.directory}}
           environment=${{inputs.environment}}
@@ -73,6 +76,15 @@ jobs:
           else
             echo "File not found!"
           fi
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      id-token: "write" # Review this permission if needed
+
+    environment: ${{ inputs.environment }}
+
+    steps:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
@@ -90,9 +102,9 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
       - name: Get Secret by Secret Manager
         run: |-
-          echo "DSN=$(gcloud secrets versions access "latest" --secret '${{steps.get_metadata.outputs.secret_name}}')" >> $GITHUB_ENV
+          echo "DSN=$(gcloud secrets versions access "latest" --secret '${{ steps.get_metadata.outputs.secret_name }}')" >> $GITHUB_ENV
 
       - name: Apply all pending migrations to database
         run: |
-          echo ${{steps.get_metadata.outputs.env_var_name}}="${{env.DSN}}"
+          echo ${{ steps.get_metadata.outputs.env_var_name }}="${{env.DSN}}"
           npx prisma migrate deploy
