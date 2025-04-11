@@ -87,7 +87,9 @@ jobs:
           name: mysql-conf-artifact
           run-id: ${{ needs.setup.outputs.artifact-id }}
       - name: Display structure of downloaded files
-        run: ls -R
+        run: |
+          ls -R ./mysql-conf-artifact
+          cat ./mysql-conf-artifact/.my.cnf
 
       - name: Use MySQL with .my.cnf
         run: |
