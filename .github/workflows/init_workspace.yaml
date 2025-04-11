@@ -20,18 +20,15 @@ jobs:
         id: created_metadata_files
         run: |
           REQUIRED_FILES=("metadata-stage1.json" "metadata-stage2.json" "metadata-stage3.json")
-          TEMPLATE='{
-                      "secret_name": "",
-                      "env_var_name": ""
-          }'
+          TEMPLATE_FILE="./template/metadata.json"
 
           any_changes=false
           for dir in */ ; do
-            [[ "$dir" == ".git/" || "$dir" == ".github/" ]] && continue
+            [[ "$dir" == ".git/" || "$dir" == ".github/" || "$dir" == ".template/" ]] && continue
 
             for file in "${REQUIRED_FILES[@]}"; do
               if [ ! -f "${dir}${file}" ]; then
-                echo "$TEMPLATE" > "${dir}${file}"
+                cp "$TEMPLATE_FILE" "${dir}${file}"
                 echo "Created ${dir}${file}"
                 any_changes=true
               fi
@@ -50,7 +47,5 @@ jobs:
           git config user.name "orlando romo"
           git config user.email "orlando.romo.97@hotmail.com"
           git add .
-          git commit -m "Add templated JSON files to new root folders" || echo "No changes to commit"
+          git commit -m "Add templated JSON files to new folder" || echo "No changes to commit"
           git push
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
