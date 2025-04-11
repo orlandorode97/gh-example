@@ -63,6 +63,8 @@ jobs:
           database=${MYSQL_DB}
           EOF
           chmod 600 .my.cnf
+      - name: Cat .my.cnf
+        run: cat .my.cnf
 
       - name: Use MySQL with .my.cnf
         run: |
