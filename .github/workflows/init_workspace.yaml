@@ -34,8 +34,8 @@ jobs:
               fi
             done
 
-            if [ "$missing" = true ]; then
-              echo "Template JSON files created in $dir"
+            if [ "$any_changes" = false ]; then
+              echo "metadata json files alreay created"
             fi
           done
 
