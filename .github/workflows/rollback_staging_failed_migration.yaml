@@ -60,6 +60,10 @@ jobs:
           database=${MYSQL_DB}
           EOF
           chmod 600 .my.cnf
+      - name: Print
+        run: |
+          ls -a
+          pwd
 
       - name: Upload .my.cnf as artifact
         uses: actions/upload-artifact@v4
