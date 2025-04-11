@@ -1,4 +1,4 @@
 {
-  "secret_name": "project_dsn",
+  "secret_name": "stage1",
   "env_var_name": "OMG_API_DSN"
 }

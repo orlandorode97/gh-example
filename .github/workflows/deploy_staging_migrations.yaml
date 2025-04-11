@@ -72,22 +72,15 @@ jobs:
           # Check if the file exists
           if [ -f "$FILE_PATH" ]; then
             echo "Reading JSON file: $FILE_PATH"
-            cat $FILE_PATH
             
             # Extract specific fields from the JSON file and set them as environment variables
-            SECRET_NAME=$(jq -r '.secret_name // "default-secret-name"' "$FILE_PATH")
-            ENV_VAR_NAME=$(jq -r '.env_var_name // "default-env-var-name"' "$FILE_PATH")
-            GITHUB_URL=$(jq -r '.github_url // "default-github-url"' "$FILE_PATH")
+            SECRET_NAME=$(jq -r '.secret_name' "$FILE_PATH")
+            ENV_VAR_NAME=$(jq -r '.env_var_name' "$FILE_PATH")
 
             # Print the extracted values for debugging
             echo "SECRET_NAME: $SECRET_NAME"
             echo "ENV_VAR_NAME: $ENV_VAR_NAME"
             echo "GITHUB_URL: $GITHUB_URL"
-
-            # Set these values as environment variables for use in later steps
-            echo "secret_name=$SECRET_NAME" >> $GITHUB_ENV
-            echo "env_var_name=$ENV_VAR_NAME" >> $GITHUB_ENV
-            echo "github_url=$GITHUB_URL" >> $GITHUB_ENV
             
           else
             echo "File not found!"
