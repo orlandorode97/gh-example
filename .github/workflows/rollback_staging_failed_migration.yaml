@@ -15,6 +15,7 @@ on:
         description: The repository containing the Prisma migrations
         required: true
         type: string
+
   workflow_call:
     inputs:
       environment:
@@ -30,12 +31,44 @@ permissions:
   contents: write
 
 jobs:
+  get_metadata:
+    name: Get Metadata
+    runs-on: ubuntu-latest
+    outputs:
+      secret_name: ${{ steps.get_metadata.outputs.secret_name }}
+      env_var_name: ${{ steps.get_metadata.outputs.env_var_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get install jq
+
+      - name: Get Metadata
+        id: get_metadata
+        run: |
+          directory=${{ inputs.directory }}
+          environment=${{ inputs.environment }}
+
+          FILE_PATH="$directory/metadata-$environment.json"
+
+          if [ -f "$FILE_PATH" ]; then
+            SECRET_NAME=$(jq -r '.secret_name' "$FILE_PATH")
+            ENV_VAR_NAME=$(jq -r '.env_var_name' "$FILE_PATH")
+
+            echo "secret_name=$SECRET_NAME" >> $GITHUB_OUTPUT
+            echo "env_var_name=$ENV_VAR_NAME" >> $GITHUB_OUTPUT
+          else
+            echo "File not found!"
+          fi
+
   setup:
     name: Set up environment
     runs-on: ubuntu-latest
+    needs: get_metadata
     permissions:
-      contents: "read"
-      id-token: "write"
+      contents: read
+      id-token: write
     steps:
       - name: Authenticate to Google Cloud
         id: auth
@@ -46,11 +79,12 @@ jobs:
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
+
       - name: Get Secret by Secret Manager
         run: |
           echo "DSN=$(gcloud secrets versions access latest --secret='${{ needs.get_metadata.outputs.secret_name }}')" >> $GITHUB_ENV
 
-      - name: Extract MySQL Credentials and creating .my.cnf
+      - name: Extract MySQL Credentials and create .my.cnf
         run: |
           IFS=':/@' read -r _ _ _ MYSQL_USER MYSQL_PWD MYSQL_HOST MYSQL_PORT MYSQL_DB _ <<< "${{ env.DSN }}"
 
@@ -60,7 +94,7 @@ jobs:
           echo "Host: $MYSQL_HOST"
           echo "Port: $MYSQL_PORT"
           echo "Database: $MYSQL_DB"
-          touch .my.cnf
+
           cat > .my.cnf << EOF
           [client]
           user=${MYSQL_USER}
@@ -69,7 +103,9 @@ jobs:
           port=${MYSQL_PORT}
           database=${MYSQL_DB}
           EOF
+
           chmod 600 .my.cnf
+
       - name: Cat .my.cnf
         run: cat .my.cnf
 
