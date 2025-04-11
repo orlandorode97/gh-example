@@ -30,6 +30,9 @@ jobs:
   setup:
     name: Set up environment
     runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      id-token: "write"
     steps:
       - name: Authenticate to Google Cloud
         id: auth
