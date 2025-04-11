@@ -1,4 +1,4 @@
 {
   "secret_name": "stage1-migration-dsn",
-  "env_var_name": "OMG_API_DSN"
+  "env_var_name": "DSN"
 }
