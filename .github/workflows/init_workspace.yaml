@@ -5,6 +5,9 @@ on:
     paths:
       - "**/"
 
+permissions:
+  contents: write
+
 jobs:
   generate-json-files:
     runs-on: ubuntu-latest
