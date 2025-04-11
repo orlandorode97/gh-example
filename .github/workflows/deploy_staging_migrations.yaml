@@ -45,16 +45,6 @@ jobs:
     environment: ${{ inputs.environment }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Verify file existence
-        run: |
-          echo "Listing files in the repository:"
-          ls -R # List all files recursively
-          echo "Listing files in prisma-gh directory:"
-          ls prisma-gh/
-
       - name: Install jq
         run: sudo apt-get install jq
 
@@ -83,33 +73,26 @@ jobs:
           else
             echo "File not found!"
           fi
-      - name: Use extracted fields
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          repository: "orlandorode97/${{ inputs.repository }}"
+          ref: ${{ inputs.branch }}
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/909613696623/locations/global/workloadIdentityPools/engineering/providers/github"
+          service_account: "gcloud-gh-actions@omg-example.iam.gserviceaccount.com"
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+      - name: Get Secret by Secret Manager
+        run: |-
+          echo "DSN=$(gcloud secrets versions access "latest" --secret '${{ steps.get_metadata.outputs.secret_name }}')" >> $GITHUB_ENV
+
+      - name: Apply all pending migrations to database
         run: |
-          echo "Secret Name: ${{ steps.get_metadata.outputs.secret_name }}"
-          echo "Environment Variable Name: ${{ steps.get_metadata.outputs.env_var_name }}"
-          echo "GitHub URL: ${{ steps.get_metadata.outputs.github_url }}"
-
-      # Uncomment the following steps if necessary
-
-      # - name: Checkout repo "orlandorode97/${{ inputs.repository }}"
-      #   uses: actions/checkout@v3
-      #   with:
-      #     repository: "orlandorode97/${{ inputs.repository }}"
-      #     ref: ${{ inputs.branch }}
-      #
-      # - name: Authenticate to Google Cloud
-      #   id: auth
-      #   uses: google-github-actions/auth@v2
-      #   with:
-      #     workload_identity_provider: "projects/909613696623/locations/global/workloadIdentityPools/engineering/providers/github"
-      #     service_account: "gcloud-gh-actions@omg-example.iam.gserviceaccount.com"
-      # - name: Set up Cloud SDK
-      #   uses: google-github-actions/setup-gcloud@v1
-      # - name: GCLOUD
-      #   run: |-
-      #     echo "DSN=$(gcloud secrets versions access "latest" --secret '${{ inputs.environment }}-migration-dsn')" >> $GITHUB_ENV
-      #
-      # - name: Apply all pending migrations to database
-      #   run: npx prisma migrate deploy
-      #   env:
-      #     DSN: ${{ env.DSN }}
+          echo ${{steps.get_metadata.outputs.env_var_name}}="${{env.DSN}}"
+          npx prisma migrate deploy
