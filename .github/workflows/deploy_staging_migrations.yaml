@@ -90,7 +90,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
       - name: Get Secret by Secret Manager
         run: |-
-          echo "DSN=$(gcloud secrets versions access "latest" --secret ${{ steps.get_metadata.outputs.secret_name }})" >> $GITHUB_ENV
+          echo "DSN=$(gcloud secrets versions access "latest" --secret '${{steps.get_metadata.outputs.secret_name}}')" >> $GITHUB_ENV
 
       - name: Apply all pending migrations to database
         run: |
