@@ -33,11 +33,11 @@ jobs:
                 any_changes=true
               fi
             done
-
-            if [ "$any_changes" = false ]; then
-              echo "metadata json files alreay created"
-            fi
           done
+
+          if [ "$any_changes" = false ]; then
+            echo "metadata json files alreay created"
+          fi
 
           echo "any_changes=$any_changes" >> "$GITHUB_OUTPUT"
 
