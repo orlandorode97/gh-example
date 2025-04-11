@@ -49,19 +49,15 @@ jobs:
         run: sudo apt-get install jq
 
       - name: Get Metadata
+        id: get_metadata
         run: |
-          directory=${{inputs.directory}}
-          environment=${{inputs.environment}}
+          directory=${{ inputs.directory }}
+          environment=${{ inputs.environment }}
 
           FILE_PATH="$directory/metadata-$environment.json"
 
-          # Debug: print the file path to check if it's correct
-          echo "File path: $FILE_PATH"
-
           # Check if the file exists
           if [ -f "$FILE_PATH" ]; then
-            echo "Reading JSON file: $FILE_PATH"
-            
             # Extract specific fields from the JSON file and set them as environment variables
             SECRET_NAME=$(jq -r '.secret_name' "$FILE_PATH")
             ENV_VAR_NAME=$(jq -r '.env_var_name' "$FILE_PATH")
