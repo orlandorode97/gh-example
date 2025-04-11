@@ -85,8 +85,8 @@ jobs:
           path: ~/
 
       - name: Display structure of downloaded files
-        run: ls -a $HOME
+        run: ls -a ~/
 
       - name: Use MySQL with .my.cnf
         run: |
-          mysql --default-file=~/.my.cnf -e "SHOW DATABASES;"
+          mysql --defaults-file=~/.my.cnf -e "SHOW DATABASES;"
