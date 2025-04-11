@@ -1,4 +1,4 @@
 {
-  "secret_name": "",
-  "env_var_name": ""
+  "secret_name": "stage3-migration-dsn",
+  "env_var_name": "DSN"
 }
