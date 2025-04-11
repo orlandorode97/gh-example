@@ -50,8 +50,8 @@ jobs:
       - name: Extract MySQL Credentials and creating .my.cnf
         run: |
           IFS=':/@' read -r _ _ _ MYSQL_USER MYSQL_PWD MYSQL_HOST MYSQL_PORT MYSQL_DB _ <<< "${{ env.DSN }}"
-          touch $HOME/.my.cnf
-          cat > $HOME/.my.cnf << EOF
+          touch .my.cnf
+          cat > .my.cnf << EOF
           [client]
           user=${MYSQL_USER}
           password=${MYSQL_PWD}
@@ -59,16 +59,16 @@ jobs:
           port=${MYSQL_PORT}
           database=${MYSQL_DB}
           EOF
-          chmod 600 $HOME/.my.cnf
+          chmod 600 .my.cnf
       - name: Print
         run: |
-          ls -a $HOME
+          ls -a
 
       - name: Upload .my.cnf as artifact
         uses: actions/upload-artifact@v4
         with:
           name: mysql-conf-artifact
-          path: $HOME/.my.cnf
+          path: ./.my.cnf
 
   execute:
     name: Executing Rollback of failed migration
