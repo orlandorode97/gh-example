@@ -69,9 +69,6 @@ jobs:
             # Extract specific fields from the JSON file and set them as environment variables
             SECRET_NAME=$(jq -r '.secret_name' "$FILE_PATH")
             ENV_VAR_NAME=$(jq -r '.env_var_name' "$FILE_PATH")
-
-            echo "Extracted secret_name: $SECRET_NAME"
-            echo "Extracted env_var_name: $ENV_VAR_NAME"
             
             echo "secret_name=$SECRET_NAME" >> $GITHUB_OUTPUT
             echo "env_var_name=$ENV_VAR_NAME" >> $GITHUB_OUTPUT
@@ -105,10 +102,10 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
       - name: Get Secret by Secret Manager
-        run: |-
-          echo "DSN=$(gcloud secrets versions access "latest" --secret '${{ needs.get_metadata.outputs.secret_name }}')" >> $GITHUB_ENV
+        run: |
+          echo "DSN=$(gcloud secrets versions access latest --secret='${{ needs.get_metadata.outputs.secret_name }}')" >> $GITHUB_ENV
 
       - name: Apply all pending migrations to database
         run: |
-          echo ${{ needs.get_metadata.outputs.env_var_name }}="${{env.DSN}}"
+          echo "${{ needs.get_metadata.outputs.env_var_name }}=$DSN"
           npx prisma migrate deploy
