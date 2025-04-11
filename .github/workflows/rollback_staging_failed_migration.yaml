@@ -53,8 +53,7 @@ jobs:
       - name: Extract MySQL Credentials and creating .my.cnf
         run: |
           IFS=':/@' read -r _ _ _ MYSQL_USER MYSQL_PWD MYSQL_HOST MYSQL_PORT MYSQL_DB _ <<< "${{ env.DSN }}"
-          touch .my.cnf
-          cat > .my.cnf << EOF
+          cat > "${{ github.workspace }}/.my.cnf" << EOF
           [client]
           user=${MYSQL_USER}
           password=${MYSQL_PWD}
@@ -71,7 +70,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mysql-conf-artifact
-          path: ./
+          path: ${{ github.workspace }}/.my.cnf
 
   execute:
     name: Executing Rollback of failed migration
@@ -86,11 +85,11 @@ jobs:
         with:
           name: mysql-conf-artifact
           run-id: ${{ needs.setup.outputs.artifact-id }}
+
       - name: Display structure of downloaded files
         run: |
-          ls -R ./mysql-conf-artifact
-          cat ./mysql-conf-artifact/.my.cnf
+          ls -R
 
       - name: Use MySQL with .my.cnf
         run: |
-          mysql --defaults-file=./mysql-conf-artifact/.my.cnf -e "SHOW DATABASES;"
+          mysql --defaults-file=./.my.cnf -e "SHOW DATABASES;"
