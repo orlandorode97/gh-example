@@ -1,4 +1,0 @@
-{
-  "secret_name": "stage2_dsn",
-  "env_var_name": "OMG_API_DSN"
-}
