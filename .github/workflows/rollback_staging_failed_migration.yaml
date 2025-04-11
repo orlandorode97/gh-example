@@ -60,6 +60,9 @@ jobs:
           EOF
           chmod 600 $HOME/.my.cnf
 
+      - name: List files after creating .my.cnf
+        run: ls -la $HOME/
+
       - name: Upload .my.cnf as artifact
         uses: actions/upload-artifact@v4
         with:
