@@ -1,0 +1,83 @@
+name: Rollback failed migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: The namespace where migrations will be deployed
+        required: true
+        type: choice
+        options:
+          - stage1
+          - stage2
+          - stage3
+      directory:
+        description: The repository containing the Prisma migrations
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      environment:
+        description: The namespace where migrations will be deployed
+        type: string
+        required: true
+      directory:
+        description: Define directory description here
+        type: string
+        required: true
+
+jobs:
+  setup:
+    name: Set up environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/909613696623/locations/global/workloadIdentityPools/engineering/providers/github"
+          service_account: "gcloud-gh-actions@omg-example.iam.gserviceaccount.com"
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+      - name: Get Secret by Secret Manager
+        run: |
+          echo "DSN=$(gcloud secrets versions access latest --secret='${{ needs.get_metadata.outputs.secret_name }}')" >> $GITHUB_ENV
+
+      - name: Extract MySQL Credentials and creating ~/.my.cnf
+        run: |
+          IFS=':/@' read -r _ _ _ MYSQL_USER MYSQL_PWD MYSQL_HOST MYSQL_PORT MYSQL_DB _ <<< "${{ env.DSN }}"
+          cat > `~/.my.cnf << EOF
+          [client]
+          user=${MYSQL_USER}
+          user=${MYSQL_USER}
+          password=${MYSQL_PWD}
+          host=${MYSQL_HOST}
+          port=${MYSQL_PORT}
+          database=${MYSQL_DB}
+          EOF
+          chmod 600 ~/.my.cnf
+
+      - name: Upload .my.cnf as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mycnf
+          path: ~/.my.cnf
+
+  execute:
+    name: Executing Rollback of failed migration
+    needs: setup
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      id-token: "write"
+    steps:
+      - name: Download .my.cnf artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mycnf
+          path: ~/. # save directly to home directory
+
+      - name: Use MySQL with .my.cnf
+        run: |
+          mysql -e "SHOW DATABASES;"
