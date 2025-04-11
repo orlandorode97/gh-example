@@ -76,7 +76,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          repository: "orlandorode97/${{ inputs.repository }}"
+          repository: "orlandorode97/${{ inputs.directory }}"
           ref: ${{ inputs.branch }}
 
       - name: Authenticate to Google Cloud
