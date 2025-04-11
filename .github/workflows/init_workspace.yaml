@@ -49,3 +49,5 @@ jobs:
           git add .
           git commit -m "Add templated JSON files to new root folders" || echo "No changes to commit"
           git push
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
