@@ -13,7 +13,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Create missing JSON files in new root folders
+      - name: Create missing JSON files
+        id: created_metadata_files
         run: |
           REQUIRED_FILES=("metadata-stage1.json" "metadata-stage2.json" "metadata-stage3.json")
           TEMPLATE='{
@@ -21,15 +22,15 @@ jobs:
                       "env_var_name": ""
           }'
 
+          any_changes=false
           for dir in */ ; do
             [[ "$dir" == ".git/" || "$dir" == ".github/" ]] && continue
 
-            missing=false
             for file in "${REQUIRED_FILES[@]}"; do
               if [ ! -f "${dir}${file}" ]; then
                 echo "$TEMPLATE" > "${dir}${file}"
                 echo "Created ${dir}${file}"
-                missing=true
+                any_changes=true
               fi
             done
 
@@ -38,7 +39,10 @@ jobs:
             fi
           done
 
+          echo "any_changes=$any_changes" >> "$GITHUB_OUTPUT"
+
       - name: Commit and push changes
+        if: steps.created_metadata_files.outputs.any_changes == 'true'
         run: |
           git config user.name "orlando romo"
           git config user.email "orlando.romo.97@hotmail.com"
