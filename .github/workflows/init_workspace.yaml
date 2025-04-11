@@ -1,0 +1,49 @@
+name: Generate templated JSON files in new root folders
+
+on:
+  push:
+    paths:
+      - "**/"
+    branches:
+      - main
+
+jobs:
+  generate-json-files:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create missing JSON files in new root folders
+        run: |
+          REQUIRED_FILES=("metadata-stage1.json" "metadata-stage2.json" "metadata-stage3.json")
+          TEMPLATE='{
+                      "secret_name": "",
+                      "env_var_name": ""
+          }'
+
+          for dir in */ ; do
+            [[ "$dir" == ".git/" || "$dir" == ".github/" ]] && continue
+
+            missing=false
+            for file in "${REQUIRED_FILES[@]}"; do
+              if [ ! -f "${dir}${file}" ]; then
+                echo "$TEMPLATE" > "${dir}${file}"
+                echo "Created ${dir}${file}"
+                missing=true
+              fi
+            done
+
+            if [ "$missing" = true ]; then
+              echo "Template JSON files created in $dir"
+            fi
+          done
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Add templated JSON files to new root folders" || echo "No changes to commit"
+          git push
