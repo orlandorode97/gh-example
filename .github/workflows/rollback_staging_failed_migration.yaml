@@ -68,7 +68,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mysql-conf-artifact
-          path: ./.my.cnf
+          path: ./
 
   execute:
     name: Executing Rollback of failed migration
