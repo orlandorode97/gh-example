@@ -27,6 +27,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          repository: "orlandorode97/${{ inputs.directory }}"
+          ref: ${{ inputs.branch }}
 
       - name: Install jq
         run: sudo apt-get install jq
