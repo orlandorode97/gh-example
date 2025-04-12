@@ -2,20 +2,6 @@ name: Rollback failed migration
 
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: The namespace where migrations will be deployed
-        required: true
-        type: choice
-        options:
-          - stage1
-          - stage2
-          - stage3
-      directory:
-        description: The repository containing the Prisma migrations
-        required: true
-        type: string
-
   workflow_call:
     inputs:
       environment:
