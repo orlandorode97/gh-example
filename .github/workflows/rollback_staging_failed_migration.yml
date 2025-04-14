@@ -108,4 +108,3 @@ jobs:
         if: steps.check-migrations.outputs.failed_migraiton != ''
         run: |
           npx prisma migrate resolve --rolled-back ${{ steps.check-migrations.outputs.failed_migraiton }}
-          npx prisma migrate resolve --applied ${{ steps.check-migrations.outputs.failed_migraiton }}
