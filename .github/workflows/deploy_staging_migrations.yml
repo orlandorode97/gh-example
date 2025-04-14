@@ -82,6 +82,7 @@ jobs:
         with:
           workload_identity_provider: "projects/909613696623/locations/global/workloadIdentityPools/engineering/providers/github"
           service_account: "gcloud-gh-actions@omg-example.iam.gserviceaccount.com"
+          create_credentials_file: false
 
       - name: Checkout target repository
         uses: actions/checkout@v4
