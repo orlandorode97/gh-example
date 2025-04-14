@@ -12,10 +12,6 @@ on:
         description: Define directory description here
         type: string
         required: true
-      branch:
-        description: The repository branch
-        type: string
-        required: true
 
 jobs:
   get_metadata:
@@ -67,6 +63,8 @@ jobs:
     steps:
       - name: Checkout target repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
 
       - name: Authenticate to Google Cloud
         id: auth
