@@ -28,7 +28,15 @@ jobs:
       - name: Checkout current repository
         uses: actions/checkout@v4
         with:
-          path: "orlandorode97/gh-prisma" # Optional but helps organization
+          # No need for token if same repository
+          path: "gh-example" # This helps avoid confusion with other checkouts
+
+      - name: Debug list files (verify structure)
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Repository structure:"
+          cd gh-example && tree
+          ls -la gh-example/prisma-gh/
 
       - name: Debug list files
         run: ls -lR
