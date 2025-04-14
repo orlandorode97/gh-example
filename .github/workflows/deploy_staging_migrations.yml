@@ -51,13 +51,13 @@ jobs:
           directory=${{ inputs.directory }}
           environment=${{ inputs.environment }}
 
-          FILE_PATH="$directory/metadata-$environment.json"
+          FULL_FILE_PATH="gh-example/$directory/metadata-$environment.json"
 
           # Check if the file exists
-          if [ -f "$FILE_PATH" ]; then
+          if [ -f "$FULL_FILE_PATH" ]; then
             # Extract specific fields from the JSON file and set them as environment variables
-            SECRET_NAME=$(jq -r '.secret_name' "$FILE_PATH")
-            ENV_VAR_NAME=$(jq -r '.env_var_name' "$FILE_PATH")
+            SECRET_NAME=$(jq -r '.secret_name' "$FULL_FILE_PATH")
+            ENV_VAR_NAME=$(jq -r '.env_var_name' "$FULL_FILE_PATH")
             
             echo "secret_name=$SECRET_NAME" >> $GITHUB_OUTPUT
             echo "env_var_name=$ENV_VAR_NAME" >> $GITHUB_OUTPUT
