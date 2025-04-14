@@ -30,7 +30,7 @@ jobs:
         with:
           repository: orlandorode97/gh-prisma
           token: ${{ secrets.GH_TOKEN }}
-          ref: example
+          path: gh-prisma
 
       - name: Debug list files
         run: ls -lR
