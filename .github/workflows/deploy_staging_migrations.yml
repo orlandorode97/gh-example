@@ -25,12 +25,10 @@ jobs:
       secret_name: ${{ steps.get_metadata.outputs.secret_name }}
       env_var_name: ${{ steps.get_metadata.outputs.env_var_name}}
     steps:
-      - name: Checkout other repo
+      - name: Checkout current repository
         uses: actions/checkout@v4
         with:
-          repository: orlandorode97/gh-prisma
-          token: ${{ secrets.GH_TOKEN }}
-          path: gh-prisma
+          path: "orlandorode97/gh-prisma" # Optional but helps organization
 
       - name: Debug list files
         run: ls -lR
