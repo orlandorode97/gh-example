@@ -76,15 +76,15 @@ jobs:
     environment: ${{ inputs.environment }}
 
     steps:
-      - name: Checkout target repository
-        uses: actions/checkout@v4
-
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: "projects/909613696623/locations/global/workloadIdentityPools/engineering/providers/github"
           service_account: "gcloud-gh-actions@omg-example.iam.gserviceaccount.com"
+
+      - name: Checkout target repository
+        uses: actions/checkout@v4
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
