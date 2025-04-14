@@ -1,0 +1,119 @@
+name: Rollback failed migration
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      environment:
+        description: The namespace where migrations will be deployed
+        type: string
+        required: true
+      directory:
+        description: Define directory description here
+        type: string
+        required: true
+      branch:
+        description: The branch of the target repository
+        type: string
+        required: true
+
+jobs:
+  get_metadata:
+    name: Get Metadata
+    runs-on: ubuntu-latest
+    outputs:
+      secret_name: ${{ steps.get_metadata.outputs.secret_name }}
+      env_var_name: ${{ steps.get_metadata.outputs.env_var_name }}
+    steps:
+      - name: Checkout metadata repository
+        uses: actions/checkout@v4
+        with:
+          repository: orlandorode97/gh-example
+          path: "gh-example"
+
+      - name: Install jq
+        run: sudo apt-get install jq
+
+      - name: Get Metadata
+        id: get_metadata
+        run: |
+          directory=${{ inputs.directory }}
+          environment=${{ inputs.environment }}
+
+          FULL_FILE_PATH="gh-example/$directory/metadata-$environment.json"
+
+          if [ -f "$FULL_FILE_PATH" ]; then
+            SECRET_NAME=$(jq -r '.secret_name' "$FULL_FILE_PATH")
+            ENV_VAR_NAME=$(jq -r '.env_var_name' "$FULL_FILE_PATH")
+
+            echo "secret_name=$SECRET_NAME" >> $GITHUB_OUTPUT
+            echo "env_var_name=$ENV_VAR_NAME" >> $GITHUB_OUTPUT
+          else
+            echo "File not found!"
+          fi
+
+  setup:
+    name: Set up environment
+    runs-on: ubuntu-latest
+    needs: get_metadata
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/909613696623/locations/global/workloadIdentityPools/engineering/providers/github"
+          service_account: "gcloud-gh-actions@omg-example.iam.gserviceaccount.com"
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Get Secret by Secret Manager
+        run: |
+          echo "DSN=$(gcloud secrets versions access latest --secret='${{ needs.get_metadata.outputs.secret_name }}')" >> $GITHUB_ENV
+
+      - name: Extract MySQL Credentials and create .my.cnf
+        run: |
+          IFS=':/@' read -r _ _ _ MYSQL_USER MYSQL_PWD MYSQL_HOST MYSQL_PORT MYSQL_DB _ <<< "${{ env.DSN }}"
+
+          cat > .my.cnf << EOF
+          [client]
+          user=${MYSQL_USER}
+          password=${MYSQL_PWD}
+          host=${MYSQL_HOST}
+          port=${MYSQL_PORT}
+          database=${MYSQL_DB}
+          EOF
+          chmod 600 .my.cnf
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.11"
+
+      - name: Installing prisma
+        run: npm install prisma
+
+      - name: Check for Failed Migrations
+        id: check-migrations
+        run: |
+          FAILED_MIGRATION=$(mysql --defaults-file=.my.cnf -sN -e \
+            "SELECT migration_name FROM \`_prisma_migrations\` WHERE finished_at IS NULL AND rolled_back_at IS NULL ORDER BY started_at DESC LIMIT 1")
+          echo "failed_migration=$FAILED_MIGRATION" >> $GITHUB_OUTPUT
+
+      - name: Executing down migration
+        if: steps.check-migrations.outputs.failed_migration != ''
+        run: |
+          npx prisma db execute --file "prisma/migrations/${{ steps.check-migrations.outputs.failed_migration }}/down.sql" --schema "prisma/schema.prisma"
+
+      - name: Resolve Failed Migration
+        if: steps.check-migrations.outputs.failed_migration != ''
+        run: |
+          npx prisma migrate resolve --rolled-back ${{ steps.check-migrations.outputs.failed_migration }}

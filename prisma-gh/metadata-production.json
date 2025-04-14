@@ -1,0 +1,5 @@
+{
+  "secret_name": "production-migration-dsn",
+  "env_var_name": "DSN"
+}
+

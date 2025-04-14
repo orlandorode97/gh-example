@@ -19,7 +19,7 @@ jobs:
       - name: Create missing JSON files
         id: created_metadata_files
         run: |
-          REQUIRED_FILES=("metadata-stage1.json" "metadata-stage2.json" "metadata-stage3.json")
+          REQUIRED_FILES=("metadata-stage1.json" "metadata-stage2.json" "metadata-stage3.json", "metadata-production.json")
           TEMPLATE_FILE="./.template/metadata.json"
 
           any_changes=false

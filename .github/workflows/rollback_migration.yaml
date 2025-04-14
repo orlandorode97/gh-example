@@ -1,4 +1,4 @@
-name: Rollback failed migration
+name: Rollback migration
 
 on:
   workflow_dispatch:
@@ -10,6 +10,10 @@ on:
         required: true
       directory:
         description: Define directory description here
+        type: string
+        required: true
+      branch:
+        description: The branch of the target repository
         type: string
         required: true
 
@@ -58,6 +62,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
 
       - name: Authenticate to Google Cloud
         id: auth
@@ -95,14 +101,20 @@ jobs:
       - name: Installing prisma
         run: npm install prisma
 
-      - name: Check for Failed Migrations
+      - name: Check last migration applied
         id: check-migrations
         run: |
-          FAILED_MIGRATION=$(mysql --defaults-file=.my.cnf -sN -e \
-            "SELECT migration_name FROM \`_prisma_migrations\` WHERE finished_at IS NULL AND rolled_back_at IS NULL ORDER BY started_at DESC LIMIT 1")
-          echo "failed_migraiton=$FAILED_MIGRATION" >> $GITHUB_OUTPUT
+          LAST_MIGRATION=$(mysql --defaults-file=.my.cnf -sN -e \
+            "SELECT migration_name FROM \`_prisma_migrations\` WHERE rolled_back_at IS NULL ORDER BY finished_at DESC LIMIT 1")
+          echo "last_migration=$LAST_MIGRATION" >> $GITHUB_OUTPUT
 
-      - name: Resolve Failed Migration
-        if: steps.check-migrations.outputs.failed_migraiton != ''
+      - name: Executing down migration
+        if: steps.check-migrations.outputs.last_migration != ''
         run: |
-          npx prisma migrate resolve --rolled-back ${{ steps.check-migrations.outputs.failed_migraiton }}
+          npx prisma db execute --file "prisma/migrations/${{ steps.check-migrations.outputs.last_migration }}/down.sql" --schema "prisma/schema.prisma"
+
+      - name: Deleting rollback record
+        if: steps.check-migrations.outputs.last_migration != ''
+        run: |
+          mysql --defaults-file=.my.cnf -sN - \
+          "DELETE FROM \`_prisma_migrations\` WHERE migration_name = '${{ steps.check-migrations.outputs.last_migration }}' AND rolled_back_at IS NULL"
