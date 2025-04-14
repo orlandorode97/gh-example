@@ -30,7 +30,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: orlandorode97/gh-example
-          token: ${{ secrets.GH_TOKEN }} # Needed for private repo
           path: "gh-example"
 
       - name: Debug metadata repository structure
