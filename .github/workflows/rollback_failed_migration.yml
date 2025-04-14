@@ -111,7 +111,7 @@ jobs:
       - name: Executing down migration
         if: steps.check-migrations.outputs.failed_migration != ''
         run: |
-          npx prisma db execute --file "prisma/migrations/${{ steps.check-migrations.outputs.failed_migration }}/down.sql" --schema "prisma/schema.prisma"
+          npx prisma db execute --file "prisma/migrations/${{ steps.check-migrations.outputs.failed_migration }}/down.sql" --schema "prisma/schema.prisma" || true
 
       - name: Resolve Failed Migration
         if: steps.check-migrations.outputs.failed_migration != ''
