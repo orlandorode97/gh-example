@@ -28,7 +28,10 @@ jobs:
       - name: Checkout current gh-example-repo
         uses: actions/checkout@v3
         with:
-          path: ${{ inputs.directory }}
+          repository: orlandorode97/gh-prisma
+          sparse-checkout: |
+            ${{ inputs.directory }}/metadata-${{ inputs.environment }}.json
+          sparse-checkout-cone-mode: false
 
       - name: Debug list files
         run: ls -lR
