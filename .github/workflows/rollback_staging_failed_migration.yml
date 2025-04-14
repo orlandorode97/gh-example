@@ -24,8 +24,11 @@ jobs:
       secret_name: ${{ steps.get_metadata.outputs.secret_name }}
       env_var_name: ${{ steps.get_metadata.outputs.env_var_name }}
     steps:
-      - name: Checkout
+      - name: Checkout metadata repository
         uses: actions/checkout@v4
+        with:
+          repository: orlandorode97/gh-example
+          path: "gh-example"
 
       - name: Install jq
         run: sudo apt-get install jq
@@ -36,11 +39,11 @@ jobs:
           directory=${{ inputs.directory }}
           environment=${{ inputs.environment }}
 
-          FILE_PATH="$directory/metadata-$environment.json"
+          FULL_FILE_PATH="gh-example/$directory/metadata-$environment.json"
 
-          if [ -f "$FILE_PATH" ]; then
-            SECRET_NAME=$(jq -r '.secret_name' "$FILE_PATH")
-            ENV_VAR_NAME=$(jq -r '.env_var_name' "$FILE_PATH")
+          if [ -f "$FULL_FILE_PATH" ]; then
+            SECRET_NAME=$(jq -r '.secret_name' "$FULL_FILE_PATH")
+            ENV_VAR_NAME=$(jq -r '.env_var_name' "$FULL_FILE_PATH")
 
             echo "secret_name=$SECRET_NAME" >> $GITHUB_OUTPUT
             echo "env_var_name=$ENV_VAR_NAME" >> $GITHUB_OUTPUT
@@ -57,10 +60,10 @@ jobs:
       id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          repository: "orlandorode97/${{ inputs.directory }}"
-          ref: ${{ inputs.branch }}
+          ref: ${{ github.ref }}
+
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@v2

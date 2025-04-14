@@ -25,22 +25,11 @@ jobs:
       secret_name: ${{ steps.get_metadata.outputs.secret_name }}
       env_var_name: ${{ steps.get_metadata.outputs.env_var_name}}
     steps:
-      # First checkout THIS repository (#1 - gh-example)
       - name: Checkout metadata repository
         uses: actions/checkout@v4
         with:
           repository: orlandorode97/gh-example
           path: "gh-example"
-
-      - name: Debug metadata repository structure
-        working-directory: ./gh-example
-        run: |
-          echo "Metadata repository contents:"
-          tree
-          ls -la prisma-gh/
-
-      - name: Debug list files
-        run: ls -lR
 
       - name: Install jq
         run: sudo apt-get install jq
