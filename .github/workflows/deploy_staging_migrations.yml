@@ -30,8 +30,8 @@ jobs:
         with:
           path: ${{ inputs.directory }}
 
-      - name: List files of current repo
-        run: ls -a
+      - name: Debug list files
+        run: ls -lR
 
       - name: Install jq
         run: sudo apt-get install jq
