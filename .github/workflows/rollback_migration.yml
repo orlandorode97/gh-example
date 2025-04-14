@@ -116,5 +116,5 @@ jobs:
       - name: Deleting rollback record
         if: steps.check-migrations.outputs.last_migration != ''
         run: |
-          mysql --defaults-file=.my.cnf -sN - \
+          mysql --defaults-file=.my.cnf -sN -e \
           "DELETE FROM \`_prisma_migrations\` WHERE migration_name = '${{ steps.check-migrations.outputs.last_migration }}' AND rolled_back_at IS NULL"
