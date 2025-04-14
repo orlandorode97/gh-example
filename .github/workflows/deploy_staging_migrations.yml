@@ -25,18 +25,20 @@ jobs:
       secret_name: ${{ steps.get_metadata.outputs.secret_name }}
       env_var_name: ${{ steps.get_metadata.outputs.env_var_name}}
     steps:
-      - name: Checkout current repository
+      # First checkout THIS repository (#1 - gh-example)
+      - name: Checkout metadata repository
         uses: actions/checkout@v4
         with:
-          # No need for token if same repository
-          path: "gh-example" # This helps avoid confusion with other checkouts
+          repository: orlandorode97/gh-example
+          token: ${{ secrets.GH_TOKEN }} # Needed for private repo
+          path: "gh-example"
 
-      - name: Debug list files (verify structure)
+      - name: Debug metadata repository structure
+        working-directory: ./gh-example
         run: |
-          echo "Current directory: $(pwd)"
-          echo "Repository structure:"
-          cd gh-example && tree
-          ls -la gh-example/prisma-gh/
+          echo "Metadata repository contents:"
+          tree
+          ls -la prisma-gh/
 
       - name: Debug list files
         run: ls -lR
