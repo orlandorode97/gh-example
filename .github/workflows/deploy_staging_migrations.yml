@@ -25,14 +25,11 @@ jobs:
       secret_name: ${{ steps.get_metadata.outputs.secret_name }}
       env_var_name: ${{ steps.get_metadata.outputs.env_var_name}}
     steps:
-      - name: Checkout current gh-example-repo
-        uses: actions/checkout@v3
+      - name: Checkout other repo
+        uses: actions/checkout@v4
         with:
-          repository: orlandorode97/gh-example
-          ref: ${{ github.workflow_ref }}
-          sparse-checkout: |
-            ${{ inputs.directory }}/metadata-${{ inputs.environment }}.json
-          sparse-checkout-cone-mode: false
+          repository: orlandorode97/gh-prisma
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: Debug list files
         run: ls -lR
