@@ -25,7 +25,10 @@ jobs:
       secret_name: ${{ steps.get_metadata.outputs.secret_name }}
       env_var_name: ${{ steps.get_metadata.outputs.env_var_name}}
     steps:
-      - name: List all files
+      - name: Checkout current gh-example-repo
+        uses: actions/checkout@v3
+
+      - name: List files of current repo
         run: ls -a
 
       - name: Install jq
@@ -62,7 +65,7 @@ jobs:
     environment: ${{ inputs.environment }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout target repository ${{ inputs.directory }}
         uses: actions/checkout@v3
         with:
           repository: "orlandorode97/${{ inputs.directory }}"
