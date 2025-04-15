@@ -106,19 +106,19 @@ jobs:
 
       - name: Create branch and push
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           git config user.name "orlando romo"
           git config user.email "orlando.romo.97@hotmail.com"
           git checkout -b ${{ steps.create_baseline_directory.outputs.baseline_dir }}
           git add prisma/migrations/*
           git commit -m "baseline production schema"
-          git push --set-upstream origin ${{ steps.create_baseline_directory.outputs.baseline_dir }}
+          git push --set-upstream https://x-access-token:${GH_PUSH_TOKEN}@github.com/${{ github.repository }} ${{ steps.create_baseline_directory.outputs.baseline_dir }}
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_TOKEN }}
           commit-message: "chore: baseline production schema"
           title: "Baseline: Initialize production schema"
           body: "This PR adds the baseline migration for the current production schema"
