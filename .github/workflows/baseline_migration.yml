@@ -106,7 +106,7 @@ jobs:
 
       - name: Create branch and push
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "orlando romo"
           git config user.email "orlando.romo.97@hotmail.com"
