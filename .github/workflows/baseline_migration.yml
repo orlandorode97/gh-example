@@ -87,7 +87,7 @@ jobs:
       - name: Creating baseline migration directory
         id: create_baseline_directory
         run: |
-          BASELINE_DIR="prisma/migrations/$(date +%s)/init-baseline"
+          BASELINE_DIR="prisma/migrations/$(date +%s)-init-baseline"
           mkdir -p $BASELINE_DIR
           echo "baseline_dir=$BASELINE_DIR" >> $GITHUB_OUTPUT
 
