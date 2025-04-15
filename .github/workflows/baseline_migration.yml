@@ -12,6 +12,9 @@ on:
         description: Define directory description here
         type: string
         required: true
+    secrets: # ✅ Add this block
+      GH_TOKEN:
+        required: true
 
 permissions:
   contents: write
