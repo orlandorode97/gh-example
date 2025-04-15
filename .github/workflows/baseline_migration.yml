@@ -1,0 +1,115 @@
+name: Baseline Production Database
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      directory:
+        description: Define directory description here
+        type: string
+        required: true
+jobs:
+  get_metadata:
+    name: Get Metadata
+    runs-on: ubuntu-latest
+    outputs:
+      secret_name: ${{ steps.get_metadata.outputs.secret_name }}
+      env_var_name: ${{ steps.get_metadata.outputs.env_var_name}}
+    steps:
+      - name: Checkout metadata repository
+        uses: actions/checkout@v4
+        with:
+          repository: orlandorode97/gh-example
+          path: "gh-example"
+
+      - name: Install jq
+        run: sudo apt-get install jq
+
+      - name: Get Metadata
+        id: get_metadata
+        run: |
+          directory=${{ inputs.directory }}
+          environment=${{ inputs.environment }}
+
+          FULL_FILE_PATH="gh-example/$directory/metadata-$environment.json"
+
+          # Check if the file exists
+          if [ -f "$FULL_FILE_PATH" ]; then
+            # Extract specific fields from the JSON file and set them as environment variables
+            SECRET_NAME=$(jq -r '.secret_name' "$FULL_FILE_PATH")
+            ENV_VAR_NAME=$(jq -r '.env_var_name' "$FULL_FILE_PATH")
+            
+            echo "secret_name=$SECRET_NAME" >> $GITHUB_OUTPUT
+            echo "env_var_name=$ENV_VAR_NAME" >> $GITHUB_OUTPUT
+            
+          else
+            echo "File not found!"
+          fi
+  baseline:
+    name: Baseline Production Database
+    needs: get_metadata
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/909613696623/locations/global/workloadIdentityPools/engineering/providers/github"
+          service_account: "gcloud-gh-actions@omg-example.iam.gserviceaccount.com"
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+      - name: Get Secret by Secret Manager
+        run: |
+          echo "DSN=$(gcloud secrets versions access latest --secret='${{ needs.get_metadata.outputs.secret_name }}')" >> $GITHUB_ENV
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.11"
+
+      - name: Installing prisma
+        run: npm install prisma
+
+      - name: Creating baseline migration directory
+        id: create_baseline_directory
+        run: |
+          BASELINE_DIR="prisma/migrations/$(date +%s)/init-baseline"
+          mkdir -p $BASELINE_DIR
+          echo "baseline_dir=$BASELINE_DIR" >> $GITHUB_OUTPUT
+
+      - name: Generate baseline SQL
+        run: |
+          echo "${{ needs.get_metadata.outputs.env_var_name }}=$DSN"
+          npx prisma migrate diff \
+          --from-empty \
+          --to-schema-datamodel \
+          prisma/schema.prisma --script > \
+          ${{ steps.create_baseline_directory.outputs.baseline_dir }}
+
+      - name: Create branch and push
+        run: |
+          git config user.name "Orlando Romo"
+          git config user.email "orlando.romo.97@hotmail.com"
+          git checkout -b baseline/init-${{ steps.create_baseline_directory.outputs.baseline_dir }}
+          git add prisma/migrations/*
+          git commit -m "baseline production schema"
+          git push origin HEAD
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: baseline production schema"
+          title: "Baseline: Initialize production schema"
+          body: "This PR adds the baseline migration for the current production schema"
+          base: main
