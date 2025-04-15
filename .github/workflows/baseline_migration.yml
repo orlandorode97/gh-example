@@ -4,6 +4,10 @@ on:
   workflow_dispatch:
   workflow_call:
     inputs:
+      environment:
+        default: production
+        type: string
+        required: true
       directory:
         description: Define directory description here
         type: string
