@@ -12,6 +12,10 @@ on:
         description: Define directory description here
         type: string
         required: true
+
+permissions:
+  contents: write
+
 jobs:
   get_metadata:
     name: Get Metadata
