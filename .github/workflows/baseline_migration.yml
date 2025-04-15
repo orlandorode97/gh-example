@@ -98,7 +98,7 @@ jobs:
           --from-empty \
           --to-schema-datamodel \
           prisma/schema.prisma --script > \
-          ${{ steps.create_baseline_directory.outputs.baseline_dir }}
+          ${{ steps.create_baseline_directory.outputs.baseline_dir }}/baseline.sql
 
       - name: Create branch and push
         run: |
