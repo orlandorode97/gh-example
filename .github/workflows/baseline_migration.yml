@@ -111,7 +111,7 @@ jobs:
           git checkout -b baseline/init-${{ steps.create_baseline_directory.outputs.baseline_dir }}
           git add prisma/migrations/*
           git commit -m "baseline production schema"
-          git push
+          git push --set-upstream origin baseline/init-prisma/migrations/${{ steps.create_baseline_directory.outputs.baseline_dir }}
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
